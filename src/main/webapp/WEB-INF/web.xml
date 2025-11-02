@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee 
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+    
+    <!-- Nombre de la aplicación -->
+    <display-name>Verificador de Códigos</display-name>
+    
+    <!-- Descripción de la aplicación -->
+    <description>
+        Aplicación web para verificar la existencia de códigos de productos en la base de datos
+    </description>
+    
+    <!-- Página de bienvenida por defecto -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+    
+    <!-- Configuración de manejo de errores -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.html</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>500</error-code>
+        <location>/index.html</location>
+    </error-page>
+    
+    <!-- Configuración de sesión (opcional) -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+</web-app>
