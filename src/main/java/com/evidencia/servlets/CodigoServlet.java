@@ -1,146 +1,202 @@
 package com.evidencia.servlets;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import com.evidencia.model.Producto;
+import com.evidencia.service.ProductoService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
+import java.io.IOException;
+import java.util.Optional;
 
 /**
- * Servlet que maneja la verificación de códigos de productos en la base de
- * datos. VERSIÓN PARA TOMCAT 10+ (usa jakarta)
+ * Servlet que maneja la verificación de códigos de productos.
+ * VERSIÓN ACTUALIZADA CON SPRING + HIBERNATE
+ * 
+ * CAMBIOS PRINCIPALES:
+ * - Ya NO usa JDBC directamente
+ * - Ya NO crea conexiones manuales
+ * - Usa Spring para inyección de dependencias
+ * - Delega la lógica al ProductoService
+ * - Usa Hibernate a través del service
+ * 
+ * FLUJO:
+ * 1. Usuario envía formulario
+ * 2. Servlet recibe la petición
+ * 3. Servlet le pide a Spring el ProductoService
+ * 4. Service usa ProductoRepository
+ * 5. Repository consulta con Hibernate
+ * 6. Servlet muestra resultado en JSP
+ * 
+ * @author Tu Nombre
+ * @version 2.0 - Con Spring + Hibernate
  */
 @WebServlet("/verificarCodigo")
 public class CodigoServlet extends HttpServlet {
-
+    
     private static final long serialVersionUID = 1L;
-
-    // Configuración de la base de datos
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/verificador_codigos";
-    private static final String DB_USER = "root"; // Cambiar según tu configuración
-    private static final String DB_PASSWORD = "c24n8pmrsql"; // Cambiar según tu contraseña de MySQL
-
+    private static final Logger logger = LoggerFactory.getLogger(CodigoServlet.class);
+    
     /**
-     * Método que se ejecuta cuando el servlet es inicializado. Carga el driver
-     * de MySQL.
+     * Service inyectado por Spring.
+     * NO se inicializa con 'new' - Spring lo inyecta automáticamente.
+     * 
+     * Se obtiene en el método init() usando el WebApplicationContext.
+     */
+    private ProductoService productoService;
+    
+    /**
+     * Se ejecuta cuando el servlet es inicializado.
+     * 
+     * IMPORTANTE: Aquí obtenemos el ProductoService desde Spring.
+     * WebApplicationContext es el contenedor de Spring en una aplicación web.
+     * 
+     * Spring ya inicializó todos los beans (@Service, @Repository, etc.)
+     * Solo necesitamos pedirle el bean que necesitamos.
      */
     @Override
     public void init() throws ServletException {
+        super.init();
+        
         try {
-            // Cargar el driver de MySQL
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Driver de MySQL cargado correctamente");
-        } catch (ClassNotFoundException e) {
-            throw new ServletException("No se pudo cargar el driver de MySQL", e);
+            // Obtener el contexto de Spring
+            // WebApplicationContextUtils busca el contexto de Spring en el ServletContext
+            WebApplicationContext context = WebApplicationContextUtils
+                    .getWebApplicationContext(getServletContext());
+            
+            if (context == null) {
+                String error = "No se pudo obtener el contexto de Spring. Verifica la configuración.";
+                logger.error(error);
+                throw new ServletException(error);
+            }
+            
+            // Obtener el bean ProductoService desde Spring
+            // Spring busca un bean de tipo ProductoService y nos lo devuelve
+            // Esto es INYECCIÓN DE DEPENDENCIAS en tiempo de ejecución
+            productoService = context.getBean(ProductoService.class);
+            
+            if (productoService == null) {
+                String error = "No se pudo obtener ProductoService desde Spring.";
+                logger.error(error);
+                throw new ServletException(error);
+            }
+            
+            logger.info("CodigoServlet inicializado correctamente con Spring");
+            logger.info("ProductoService inyectado: {}", productoService.getClass().getName());
+            
+        } catch (Exception e) {
+            logger.error("Error al inicializar el servlet con Spring", e);
+            throw new ServletException("Error en la inicialización", e);
         }
     }
-
+    
     /**
-     * Maneja las peticiones POST del formulario. Recibe el código, consulta la
-     * base de datos y muestra el resultado.
+     * Maneja las peticiones POST del formulario.
+     * 
+     * FLUJO SIMPLIFICADO:
+     * 1. Recibir código del usuario
+     * 2. Validar entrada
+     * 3. Llamar a productoService.verificarCodigo()
+     * 4. Enviar resultado al JSP
+     * 
+     * Ya NO hay:
+     * - Connection, PreparedStatement, ResultSet
+     * - try-catch con SQLException
+     * - Manejo manual de recursos
+     * - SQL hardcodeado
+     * 
+     * Spring y Hibernate manejan todo eso automáticamente.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        // Configurar la codificación de caracteres
+        
+        // Configurar encoding
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
-
-        // Obtener el código ingresado por el usuario
+        
+        // 1. OBTENER CÓDIGO DEL FORMULARIO
         String codigo = request.getParameter("codigo");
-
-        // Validar que el código no esté vacío
+        logger.info("Petición recibida para verificar código: {}", codigo);
+        
+        // 2. VALIDAR ENTRADA
         if (codigo == null || codigo.trim().isEmpty()) {
+            logger.warn("Código vacío o nulo recibido");
             request.setAttribute("error", "El código no puede estar vacío");
             request.getRequestDispatcher("resultado.jsp").forward(request, response);
             return;
         }
-
-        // Normalizar el código (convertir a mayúsculas y eliminar espacios)
+        
+        // Normalizar código
         codigo = codigo.trim().toUpperCase();
-
-        // Variables para almacenar los resultados
-        boolean codigoExiste = false;
-        String nombreProducto = null;
-        String mensajeError = null;
-
-        // Consultar la base de datos
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
+        logger.debug("Código normalizado: {}", codigo);
+        
         try {
-            // Establecer conexión con la base de datos
-            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            System.out.println("Conexión establecida con la base de datos");
-
-            // Preparar la consulta SQL
-            String sql = "SELECT nombre FROM productos WHERE codigo = ?";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, codigo);
-
-            // Ejecutar la consulta
-            rs = stmt.executeQuery();
-
-            // Verificar si se encontró el código
-            if (rs.next()) {
-                codigoExiste = true;
-                nombreProducto = rs.getString("nombre");
-                System.out.println("Código encontrado: " + codigo + " - " + nombreProducto);
+            // 3. VERIFICAR CÓDIGO USANDO EL SERVICE
+            // Esta es la ÚNICA línea que accede a la base de datos
+            // Todo el resto lo maneja Spring + Hibernate automáticamente
+            Optional<Producto> productoOpt = productoService.verificarCodigo(codigo);
+            
+            // 4. PREPARAR RESULTADO
+            if (productoOpt.isPresent()) {
+                // Código EXISTE
+                Producto producto = productoOpt.get();
+                
+                logger.info("✅ Código encontrado: {} - {}", producto.getCodigo(), producto.getNombre());
+                
+                request.setAttribute("codigoExiste", true);
+                request.setAttribute("codigo", producto.getCodigo());
+                request.setAttribute("nombreProducto", producto.getNombre());
+                request.setAttribute("producto", producto); // Objeto completo
+                
             } else {
-                System.out.println("Código no encontrado: " + codigo);
+                // Código NO EXISTE
+                logger.info("❌ Código no encontrado: {}", codigo);
+                
+                request.setAttribute("codigoExiste", false);
+                request.setAttribute("codigo", codigo);
+                request.setAttribute("nombreProducto", null);
             }
-
-        } catch (SQLException e) {
-            // Manejo de errores de base de datos
-            mensajeError = "Error al consultar la base de datos: " + e.getMessage();
-            System.err.println("Error SQL: " + e.getMessage());
-            e.printStackTrace();
-
-        } finally {
-            // Cerrar recursos en orden inverso
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-                System.out.println("Recursos de base de datos cerrados correctamente");
-            } catch (SQLException e) {
-                System.err.println("Error al cerrar recursos: " + e.getMessage());
-            }
+            
+            // 5. REDIRIGIR AL JSP
+            request.getRequestDispatcher("resultado.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            // Manejo de errores
+            logger.error("Error al verificar código: {}", codigo, e);
+            
+            request.setAttribute("error", "Error al consultar la base de datos: " + e.getMessage());
+            request.setAttribute("codigo", codigo);
+            request.getRequestDispatcher("resultado.jsp").forward(request, response);
         }
-
-        // Enviar los resultados a la página JSP
-        request.setAttribute("codigo", codigo);
-        request.setAttribute("codigoExiste", codigoExiste);
-        request.setAttribute("nombreProducto", nombreProducto);
-        request.setAttribute("mensajeError", mensajeError);
-
-        // Redirigir a la página de resultados
-        request.getRequestDispatcher("resultado.jsp").forward(request, response);
     }
-
+    
     /**
-     * Maneja las peticiones GET redirigiendo a POST. Esto permite que el
-     * servlet funcione con ambos métodos.
+     * Maneja las peticiones GET.
+     * Redirige a la página principal.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Redirigir a la página principal si se accede directamente
+        logger.debug("Petición GET recibida, redirigiendo a index.html");
         response.sendRedirect("index.html");
+    }
+    
+    /**
+     * Se ejecuta cuando el servlet es destruido.
+     * Spring se encarga de cerrar todos los recursos automáticamente.
+     */
+    @Override
+    public void destroy() {
+        logger.info("CodigoServlet destruido");
+        // No necesitamos cerrar nada manualmente
+        // Spring cierra el DataSource, EntityManager, etc.
+        super.destroy();
     }
 }

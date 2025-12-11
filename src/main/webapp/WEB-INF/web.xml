@@ -2,24 +2,104 @@
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee 
-         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
-         version="5.0">
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
     
     <!-- Nombre de la aplicación -->
-    <display-name>Verificador de Códigos</display-name>
+    <display-name>Verificador de Códigos - Spring + Hibernate</display-name>
     
-    <!-- Descripción de la aplicación -->
     <description>
-        Aplicación web para verificar la existencia de códigos de productos en la base de datos
+        Aplicación web con Spring Framework, Hibernate ORM y MySQL
     </description>
     
-    <!-- Página de bienvenida por defecto -->
+    <!-- 
+        ====================================================================
+        CONFIGURACIÓN DE SPRING
+        ====================================================================
+        
+        Spring necesita ser inicializado cuando la aplicación arranca.
+        ContextLoaderListener es el listener que inicia Spring.
+        
+        contextConfigLocation le dice a Spring dónde encontrar la configuración.
+        Como usamos configuración Java (@Configuration), indicamos la clase.
+    -->
+    
+    <!-- Parámetro de contexto: ubicación de la configuración de Spring -->
+    <context-param>
+        <param-name>contextClass</param-name>
+        <param-value>
+            org.springframework.web.context.support.AnnotationConfigWebApplicationContext
+        </param-value>
+    </context-param>
+    
+    <!-- Paquete donde está la clase de configuración -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>com.evidencia.config.AppConfig</param-value>
+    </context-param>
+    
+    <!-- Listener que inicializa Spring al arrancar la aplicación -->
+    <listener>
+        <listener-class>
+            org.springframework.web.context.ContextLoaderListener
+        </listener-class>
+    </listener>
+    
+    <!-- 
+        ====================================================================
+        CONFIGURACIÓN DEL SERVLET
+        ====================================================================
+    -->
+    
+    <!-- 
+        Ya no necesitamos declarar el servlet aquí porque usa @WebServlet,
+        pero lo dejamos documentado para claridad.
+        
+        El servlet se registra automáticamente gracias a @WebServlet("/verificarCodigo")
+    -->
+    
+    <!-- 
+        ====================================================================
+        FILTROS ADICIONALES
+        ====================================================================
+    -->
+    
+    <!-- Filtro para encoding UTF-8 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <init-param>
+            <param-name>forceEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    
+    <!-- 
+        ====================================================================
+        PÁGINAS DE BIENVENIDA
+        ====================================================================
+    -->
+    
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
     
-    <!-- Configuración de manejo de errores -->
+    <!-- 
+        ====================================================================
+        MANEJO DE ERRORES
+        ====================================================================
+    -->
+    
     <error-page>
         <error-code>404</error-code>
         <location>/index.html</location>
@@ -30,8 +110,18 @@
         <location>/index.html</location>
     </error-page>
     
-    <!-- Configuración de sesión (opcional) -->
+    <!-- 
+        ====================================================================
+        CONFIGURACIÓN DE SESIÓN
+        ====================================================================
+    -->
+    
     <session-config>
         <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure> <!-- Cambiar a true en producción con HTTPS -->
+        </cookie-config>
     </session-config>
+    
 </web-app>
