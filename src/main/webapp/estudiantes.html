@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Students — Consulta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --accent: #00e5a0;
+      --accent2: #005c41;
+      --text: #e8e8f0;
+      --muted: #5a5a7a;
+      --error: #ff4d6d;
+      --warn: #ffd166;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    header { margin-bottom: 48px; animation: fadeDown 0.6s ease both; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.25);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    h1 span { color: var(--accent); }
+    .subtitle { margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    .tab-group {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active { background: var(--accent2); color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    .search-wrap { display: flex; gap: 8px; flex: 1; min-width: 220px; }
+
+    input[type="number"] {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 10px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus { border-color: var(--accent); }
+    input[type="number"]::placeholder { color: var(--muted); }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-bottom: 32px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      animation: fadeDown 0.6s 0.15s ease both;
+      min-height: 40px;
+    }
+
+    .pill {
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .pill-ok   { background: rgba(0,229,160,0.12);  color: var(--accent); }
+    .pill-err  { background: rgba(255,77,109,0.12); color: var(--error);  }
+    .pill-warn { background: rgba(255,209,102,0.1); color: var(--warn);   }
+    .pill-idle { background: rgba(90,90,122,0.2);   color: var(--muted);  }
+
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    thead { background: var(--surface); border-bottom: 1px solid var(--border); }
+
+    th {
+      padding: 14px 20px;
+      text-align: left;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    th:first-child { color: var(--accent); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(0,229,160,0.03); }
+
+    td { padding: 14px 20px; color: var(--text); }
+
+    td:first-child {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    .program-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.2);
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    .state-box { padding: 64px 20px; text-align: center; color: var(--muted); }
+    .state-box .icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .state-box p { font-size: 13px; }
+    .state-box .hint { font-size: 11px; margin-top: 6px; opacity: 0.6; }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    .table-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .table-footer span { color: var(--accent); font-weight: 600; }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    tbody tr { animation: rowIn 0.3s ease both; }
+    tbody tr:nth-child(1)  { animation-delay: 0.00s; }
+    tbody tr:nth-child(2)  { animation-delay: 0.04s; }
+    tbody tr:nth-child(3)  { animation-delay: 0.08s; }
+    tbody tr:nth-child(4)  { animation-delay: 0.12s; }
+    tbody tr:nth-child(5)  { animation-delay: 0.16s; }
+    tbody tr:nth-child(6)  { animation-delay: 0.20s; }
+    tbody tr:nth-child(7)  { animation-delay: 0.24s; }
+    tbody tr:nth-child(8)  { animation-delay: 0.28s; }
+    tbody tr:nth-child(9)  { animation-delay: 0.32s; }
+    tbody tr:nth-child(10) { animation-delay: 0.36s; }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .controls { flex-direction: column; }
+      th, td { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <a href="index.html" class="btn-back">&#8592; Volver al Verificador</a>
+
+  <header>
+    <div class="badge">
+      <div class="badge-dot"></div>
+      API Students
+    </div>
+    <h1>Consulta de <span>Estudiantes</span></h1>
+    <p class="subtitle">Escuela de Capacitacion Petrolera - SENA</p>
+  </header>
+
+  <div class="controls">
+    <div class="tab-group">
+      <button class="tab active" id="tabPublic" onclick="setMode('public')">Publica</button>
+      <button class="tab" id="tabAuth" onclick="setMode('auth')">Protegida</button>
+    </div>
+    <div class="search-wrap">
+      <input type="number" id="idInput" placeholder="Buscar por ID (opcional)" min="1"/>
+      <button class="btn btn-primary" onclick="fetchData()">Consultar</button>
+      <button class="btn btn-outline"  onclick="clearId()">Todos</button>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <span class="pill pill-idle">LISTO</span>
+    <span id="statusMsg">Presiona "Consultar" para cargar los datos.</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Programa</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="5">
+            <div class="state-box">
+              <p>Selecciona un modo y presiona "Consultar".</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-footer" id="tableFooter" style="display:none">
+      Total: <span id="countSpan">0</span>&nbsp;registro(s)
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Usa el proxy local del proyecto Spring para evitar problemas de CORS
+  const PROXY = 'apiProxy';
+
+  let currentMode = 'public';
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('tabPublic').classList.toggle('active', mode === 'public');
+    document.getElementById('tabAuth').classList.toggle('active', mode === 'auth');
+  }
+
+  function setStatus(type, msg) {
+    const bar  = document.getElementById('statusBar');
+    const pill = bar.querySelector('.pill');
+    const txt  = document.getElementById('statusMsg');
+    const map  = {
+      ok:      ['pill-ok',   'OK'],
+      err:     ['pill-err',  'ERROR'],
+      loading: ['pill-warn', 'CARGANDO'],
+      idle:    ['pill-idle', 'LISTO'],
+    };
+    pill.className   = 'pill ' + (map[type]?.[0] ?? 'pill-idle');
+    pill.textContent = map[type]?.[1] ?? 'INFO';
+    txt.textContent  = msg;
+  }
+
+  function showLoading() {
+    document.getElementById('tableBody').innerHTML = `
+      <tr><td colspan="5">
+        <div class="state-box">
+          <div class="spinner"></div>
+          <p>Consultando API...</p>
+        </div>
+      </td></tr>`;
+    document.getElementById('tableFooter').style.display = 'none';
+  }
+
+  function clearId() {
+    document.getElementById('idInput').value = '';
+    fetchData();
+  }
+
+  async function fetchData() {
+    const id = document.getElementById('idInput').value.trim();
+
+    // Construir URL hacia el proxy local (evita CORS)
+    let url = PROXY + '?mode=' + currentMode;
+    if (id) url += '&id=' + encodeURIComponent(id);
+
+    setStatus('loading', 'Consultando via proxy: ' + url);
+    showLoading();
+
+    try {
+      const res  = await fetch(url);
+      const json = await res.json();
+
+      if (!json.ok) throw new Error(json.error ?? 'La API devolvio ok: false');
+
+      const rows = Array.isArray(json.data) ? json.data : [json.data];
+      renderTable(rows);
+      setStatus('ok', rows.length + ' registro(s) cargado(s) correctamente.');
+
+    } catch (err) {
+      document.getElementById('tableBody').innerHTML = `
+        <tr><td colspan="5">
+          <div class="state-box">
+            <p style="color:var(--error)">${err.message}</p>
+            <p class="hint">Revisa la consola del navegador para mas detalles (F12).</p>
+          </div>
+        </td></tr>`;
+      document.getElementById('tableFooter').style.display = 'none';
+      setStatus('err', 'Error: ' + err.message);
+    }
+  }
+
+  function renderTable(rows) {
+    const tbody  = document.getElementById('tableBody');
+    const footer = document.getElementById('tableFooter');
+
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="state-box"><p>No se encontraron registros.</p></div>
+        </td></tr>`;
+      footer.style.display = 'none';
+      return;
+    }
+
+    tbody.innerHTML = rows.map((s, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${s.id ?? '-'}</td>
+        <td>${s.first_name ?? '-'}</td>
+        <td>${s.last_name ?? '-'}</td>
+        <td><span class="program-badge">${s.program ?? '-'}</span></td>
+      </tr>`).join('');
+
+    document.getElementById('countSpan').textContent = rows.length;
+    footer.style.display = 'flex';
+  }
+</script>
+</body>
+</html>

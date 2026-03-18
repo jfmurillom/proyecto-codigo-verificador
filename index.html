@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Códigos de Producto</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🔍 Verificador de Códigos</h1>
+                <p class="subtitle">Ingrese el código del producto para verificar su existencia</p>
+            </div>
+            
+            <form action="verificarCodigo" method="POST" class="form-verificador">
+                <div class="input-group">
+                    <label for="codigo">Código del Producto:</label>
+                    <input 
+                        type="text" 
+                        id="codigo" 
+                        name="codigo" 
+                        placeholder="Ej: PROD001" 
+                        required
+                        pattern="[A-Za-z0-9]+"
+                        title="Solo letras y números"
+                        maxlength="50"
+                    >
+                    <small class="hint">Ingrese un código alfanumérico</small>
+                </div>
+                
+                <button type="submit" class="btn-enviar">
+                    Verificar Código
+                </button>
+            </form>
+            
+            <div class="info-section">
+                <h3>Códigos de ejemplo para probar:</h3>
+                <ul class="codigo-list">
+                    <li><code>PROD001</code> - Laptop Dell XPS 15</li>
+                    <li><code>PROD002</code> - Mouse Logitech MX Master</li>
+                    <li><code>PROD003</code> - Teclado Mecánico Corsair</li>
+                    <li><code>PROD004</code> - Monitor Samsung 27"</li>
+                    <li><code>PROD005</code> - Auriculares Sony</li>
+                </ul>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>Sistema de Verificación de Códigos v1.0</p>
+        </footer>
+    </div>
+</body>
+</html>

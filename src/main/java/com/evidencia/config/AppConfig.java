@@ -57,7 +57,7 @@ public class AppConfig {
         HikariConfig config = new HikariConfig();
 
         // Configuración de conexión a MySQL
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/verificador_codigos?useSSL=false&serverTimezone=UTC");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/verificador_codigos?allowPublicKeyRetrieval=true&useSSL=false");
         config.setUsername("root");
         config.setPassword("c24n8pmrsql"); // ⚠️ CAMBIAR según tu configuración
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");

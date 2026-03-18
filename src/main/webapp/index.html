@@ -2,53 +2,63 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificador de Códigos de Producto</title>
+    <title>Verificador de C&oacute;digos de Producto</title>
     <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
             <div class="header">
-                <h1>🔍 Verificador de Códigos</h1>
-                <p class="subtitle">Ingrese el código del producto para verificar su existencia</p>
+                <h1>Verificador de C&oacute;digos</h1>
+                <p class="subtitle">Ingrese el c&oacute;digo del producto para verificar su existencia</p>
             </div>
-            
+
             <form action="verificarCodigo" method="POST" class="form-verificador">
                 <div class="input-group">
-                    <label for="codigo">Código del Producto:</label>
-                    <input 
-                        type="text" 
-                        id="codigo" 
-                        name="codigo" 
-                        placeholder="Ej: PROD001" 
+                    <label for="codigo">C&oacute;digo del Producto:</label>
+                    <input
+                        type="text"
+                        id="codigo"
+                        name="codigo"
+                        placeholder="Ej: PROD001"
                         required
                         pattern="[A-Za-z0-9]+"
-                        title="Solo letras y números"
+                        title="Solo letras y n&uacute;meros"
                         maxlength="50"
                     >
-                    <small class="hint">Ingrese un código alfanumérico</small>
+                    <small class="hint">Ingrese un c&oacute;digo alfanum&eacute;rico</small>
                 </div>
-                
+
                 <button type="submit" class="btn-enviar">
-                    Verificar Código
+                    Verificar C&oacute;digo
                 </button>
             </form>
-            
+
             <div class="info-section">
-                <h3>Códigos de ejemplo para probar:</h3>
+                <h3>C&oacute;digos de ejemplo para probar:</h3>
                 <ul class="codigo-list">
                     <li><code>PROD001</code> - Laptop Dell XPS 15</li>
                     <li><code>PROD002</code> - Mouse Logitech MX Master</li>
-                    <li><code>PROD003</code> - Teclado Mecánico Corsair</li>
+                    <li><code>PROD003</code> - Teclado Mec&aacute;nico Corsair</li>
                     <li><code>PROD004</code> - Monitor Samsung 27"</li>
                     <li><code>PROD005</code> - Auriculares Sony</li>
                 </ul>
             </div>
+
+            <div style="margin-top: 24px; padding-top: 24px; border-top: 2px dashed #e0e0e0; text-align: center;">
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 14px;">
+                    &iquest;Deseas consultar el listado de estudiantes?
+                </p>
+                <a href="estudiantes.html" class="btn-api">
+                    Ver Estudiantes &mdash; API Students
+                </a>
+            </div>
         </div>
-        
+
         <footer class="footer">
-            <p>Sistema de Verificación de Códigos v1.0</p>
+            <p>Sistema de Verificaci&oacute;n de C&oacute;digos v1.0</p>
         </footer>
     </div>
 </body>
